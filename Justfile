@@ -315,9 +315,6 @@ process-grub-template $extra_kargs="NONE":
         kargs=()
     fi
 
-    ISO_UUID=$(uuidgen)
-    echo "${ISO_UUID}" > {{ workdir }}/iso_uuid
-
     OS_RELEASE="{{ rootfs }}/usr/lib/os-release"
     TMPL="src/grub.cfg.tmpl"
     DEST="{{ isoroot }}/boot/grub/grub.cfg"
@@ -326,9 +323,7 @@ process-grub-template $extra_kargs="NONE":
     sed \
         -e "s|@PRETTY_NAME@|${PRETTY_NAME}|g" \
         -e "s|@EXTRA_KARGS@|${kargs[*]}|g" \
-        -e "s|@ISO_UUID@|${ISO_UUID}|g" \
         "$TMPL" >"$DEST"
-
 
 # Prep the environment for the ISO
 iso-organize extra_kargs: && (process-grub-template extra_kargs)
@@ -336,6 +331,7 @@ iso-organize extra_kargs: && (process-grub-template extra_kargs)
     {{ _ci_grouping }}
     set -xeuo pipefail
     mkdir -p {{ isoroot }}/boot/grub {{ isoroot }}/LiveOS
+    touch {{ isoroot }}/ventoy.dat # For ventoy compatibility
     cp {{ rootfs }}/lib/modules/*/vmlinuz {{ isoroot }}/boot
     cp {{ workdir }}/initramfs.img {{ isoroot }}/boot
     # Hardcoded on the dmsquash-live source code unless specified otherwise via kargs
@@ -352,7 +348,6 @@ iso:
     CMD='set -xeuo pipefail
     ISOROOT="$0"
     WORKDIR="$1"
-    ISO_UUID=$(cat $WORKDIR/iso_uuid)
 
     mkdir -p $ISOROOT/EFI/BOOT
     # ARCH_SHORT needs to be uppercase
@@ -398,8 +393,7 @@ iso:
 
     xorrisofs \
         -R -J -T \
-        -V "$ISO_UUID" \
-        -volume_date uuid "$ISO_UUID" \
+        -V titanoboa_boot \
         -partition_offset 16 \
         -appended_part_as_gpt \
         -append_partition 2 C12A7328-F81F-11D2-BA4B-00A0C93EC93B \
