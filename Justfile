@@ -156,7 +156,7 @@ initramfs:
     {{ chroot_function }}
     set -euo pipefail
     CMD='set -xeuo pipefail
-    dnf install -y dracut-live
+    dnf install -y dracut-live memtest86+
     INSTALLED_KERNEL=$(rpm -q kernel-core --queryformat "%{evr}.%{arch}" | tail -n 1)
     mkdir -p $(realpath /root)
     export DRACUT_NO_XATTR=1
@@ -330,7 +330,8 @@ iso-organize extra_kargs: && (process-grub-template extra_kargs)
     #!/usr/bin/env bash
     {{ _ci_grouping }}
     set -xeuo pipefail
-    mkdir -p {{ isoroot }}/boot/grub {{ isoroot }}/LiveOS
+    mkdir -p {{ isoroot }}/boot/grub {{ isoroot }}/LiveOS {{ isoroot }}/EFI/BOOT
+    cp {{ rootfs }}/usr/lib64/memtest86+/memtest86+x64.efi {{ isoroot }}/EFI/BOOT/memtest.efi
     cp {{ rootfs }}/lib/modules/*/vmlinuz {{ isoroot }}/boot
     cp {{ workdir }}/initramfs.img {{ isoroot }}/boot
     # Hardcoded on the dmsquash-live source code unless specified otherwise via kargs
